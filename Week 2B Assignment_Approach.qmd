@@ -1,0 +1,20 @@
+---
+title: "Binary Classification Analysis: Penguin Predictions"
+author: "Pascal Hermann Kouogang Tafo"
+format: html
+editor: visual
+---
+
+# Introduction
+
+In a **recitation published in Nov 11,2017**, the author **Mohammed Sunasra** said that the metrics that we choose to evaluate our machine learning model is very important because the choice of metrics influences how the performance of machine learning algorithms is measured and compared. This assignment consist of analyzes the performance of a binary classification model that predicts penguin sex using probability outputs. The objective is to see how predicted probabilities are converted into class labels and how changing probability thresholds can affect model evaluation metrics.
+
+# APPROACH
+
+-   To successfully accomplish how goal, we will start by loading the data set directly from GitHub into our R environment. Then, we will explore the distribution of the target variable (sex) by creating a plot showing the distribution of the actual class.
+
+-   Then, we will be to write a code that will generate our own predicted classes by setting a thresholds.
+
+-   Next, we will build a confusion matrix which is considered as the most intuitive and easiest metrics used for Classification problem where the output can be at least two types of classes.
+
+-   We will finally use that confusion matrix to compute some derive performance metrics including accuracy, precision, recall and f1-score using different thresholds to see how changing probability thresholds impact performance model metrics.
