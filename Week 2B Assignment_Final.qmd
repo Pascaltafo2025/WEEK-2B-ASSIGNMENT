@@ -1,0 +1,235 @@
+---
+title: "Binary Classification Analysis: Penguin Predictions"
+author: "Pascal Hermann Kouogang Tafo"
+format: html
+editor: visual
+---
+
+# INTRODUCTION
+
+In a **recitation published in Nov 11,2017**, the author **Mohammed Sunasra** said that the metrics that we choose to evaluate our machine learning model is very important because the choice of metrics influences how the performance of machine learning algorithms is measured and compared. This assignment consist of analyzes the performance of a binary classification model that predicts penguin sex using probability outputs. The objective is to see how predicted probabilities are converted into class labels and how changing probability thresholds can affect model evaluation metrics.
+
+# APPROACH
+
+-   To successfully accomplish how goal, we will start by loading the data set directly from GitHub into our R environment. Then, we will explore the distribution of the target variable (sex) by creating a plot showing the distribution of the actual class.
+
+-   Next, we will build a confusion matrix which is considered as the most intuitive and easiest metrics used for Classification problem where the output can be at least two types of classes.
+
+-   We will finally use that confusion matrix to compute some derive performance metrics including accuracy, precision, recall and f1-score using different thresholds to see how changing probability thresholds impact performance model metrics.
+
+## INSTALL the useful R-packages for our analysis
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+```
+
+## DATA LOADING
+
+To begin our analysis of the binary classification model , we will have to first load the penguin sex predictions model dataset from our class GitHub.
+
+```{r}
+
+## Load and View the penguins predictions CSV file 
+
+url <- "https://raw.githubusercontent.com/acatlin/data/refs/heads/master/penguin_predictions.csv"
+
+Penguins_Predictions <- read.csv(url)
+
+head(Penguins_Predictions,10)
+
+
+```
+
+## 1) EXPLORE the Data
+
+Our dataset is composed of 3 columns including the predicted class label, the actual class and the probability of success. When we look at the 10 rows of our dataset, we can anticipate in saying that we have a good model because the majority of the predicted class matches the actual sex. However, is this observation good enough? To further our analysis, We will start by looking at the null error rate which represents the error rate of a naive model that always predicts the most common class.
+
+a)  **Let's start by examining the class distribution of the dataset by counting the actual class**.
+
+```{r }
+
+##Count classes
+
+class_counts <- Penguins_Predictions %>%
+  count(sex)
+
+class_counts
+
+```
+
+b)  **Let's visualize the distribution of the actual class.**
+
+To visualize our distribution, we will plot a bar graph that will show the actual class count distribution using ggplot function from the ggplot2 package.
+
+```{r plot-sex-vs-Count}
+
+ggplot(Penguins_Predictions, aes(x = sex)) +
+  geom_bar(fill = c("green","orange")) +
+  geom_text(
+    aes(
+      y = after_stat(count / sum(count)),
+      label = scales::percent(after_stat(count / sum(count)))
+      ),stat = "count", vjust = 0 ) +
+  labs(title = "Distribution of Penguins sex",
+       x = "Actual class (Sex)",
+       y = "Count")+
+  theme_minimal()
+```
+
+c)  **Calculate the Null Error Rate**
+
+The null error rate represents the proportion of incorrect predictions made by always selecting the majority class. To calculate that proportion, we will find the majority class proportion first and then subtract it to 1.
+
+```{r Null-Error-Rate}
+
+## Calculate the majority class proportion
+
+majority_prop <- max(class_counts$n) / sum(class_counts$n)
+
+# Null error rate
+null_error_rate <- 1 - majority_prop
+
+null_error_rate
+
+```
+
+The null error rate is 0.4193 which indicates that there is 41.93% of chance for an error to occur when using the actual model. Any useful classification model should outperform this baseline. A deeper analysis can be by constructing a confusion matrices which is one of the most intuitive and easiest metrics used for finding the correctness and accuracy of classification model.
+
+## 2) CONFUSION MATRICES
+
+We will build our confusion matrices using different probability thresholds including 0.2, 0.5 and 0.8 to evaluate the classification model performance. In a classification problem with an output of two types classes,the confusion matrix is a squared 2x2 matrix composed of the following metrics True Positives(TP), False Positives(FP), True Negatives(TN) and False Negatives(FN).
+
+## Let's build all three Confusion Matrices
+
+We will build those confusion matrices by using **ChatGPT** to help us generate a function. Below is the prompt and the different steps suggested by **ChatGPT**.
+
+![](Prompt_Confusion_Matrix.png){width="650"}
+
+**Step 1: Transform actual variables output into numerical data.**
+
+```{r}
+
+Penguins_Predictions <- Penguins_Predictions %>%
+  mutate(
+    actual_label = ifelse(sex == "female", 1, 0)
+  )
+
+```
+
+**Step 2: Let's write the function to build confusion Matrix**
+
+```{r}
+
+compute_confusion <- function(Penguins_Predictions, threshold) {
+  
+  pred <- ifelse(Penguins_Predictions$.pred_female > threshold, 1, 0)
+  actual_label <- Penguins_Predictions$actual
+  
+  TP <- sum(pred == 1 & actual_label == 1)
+  FP <- sum(pred == 1 & actual_label == 0)
+  TN <- sum(pred == 0 & actual_label == 0)
+  FN <- sum(pred == 0 & actual_label == 1)
+  
+  matrix(
+    c(TP, FP, FN, TN),
+    nrow = 2,
+    byrow = TRUE,
+    dimnames = list(
+      "Predicted" = c("Female", "Male"),
+      "Actual" = c("Female", "Male")
+    )
+  )
+}
+
+
+```
+
+**Confusion matrix for a threshold of 0.2**
+
+```{r}
+
+cm_02 <- compute_confusion(Penguins_Predictions, 0.2)
+cm_02
+
+
+```
+
+**Confusion matrix for a threshold of 0.5**
+
+```{r}
+
+cm_05 <- compute_confusion(Penguins_Predictions, 0.5)
+cm_05
+
+
+```
+
+**Confusion matrix for a threshold of 0.8**
+
+```{r}
+
+cm_08 <- compute_confusion(Penguins_Predictions, 0.8)
+cm_08
+
+
+```
+
+## 3) Performance metrics
+
+Since we were able to build our confusion matrices, we will now calculate the performance metrics for each of the three thresholds including the accuracy,precision, recall, and F1 scores.
+
+These performance metrics can be calculated manually using the following formula of each performance metric but it will take too much.Therefore i asked **ChatGPT** to help me calculate the performance metrics using a function in R. Below is the prompt and the solution that i received.
+
+![](Performance_Metrics_Prompt.png){width="600"}
+
+```{r performance-metrics}
+
+# Function to Compute metrics 
+
+compute_metrics <- function(Penguins_Predictions, threshold) {
+  
+  pred <- ifelse(Penguins_Predictions$.pred_female > threshold, 1, 0)
+  actual <- Penguins_Predictions$actual
+  
+  TP <- sum(pred == 1 & actual == 1)
+  FP <- sum(pred == 1 & actual == 0)
+  TN <- sum(pred == 0 & actual == 0)
+  FN <- sum(pred == 0 & actual == 1)
+  
+  accuracy <- (TP + TN) / (TP + FP + TN + FN)
+  precision <- TP / (TP + FP)
+  recall <- TP / (TP + FN)
+  f1 <- 2 * (precision * recall) / (precision + recall)
+  
+  tibble(
+    Threshold = threshold,
+    Accuracy = accuracy,
+    Precision = precision,
+    Recall = recall,
+    F1 = f1
+  )
+}
+
+# Compute all metrics for all thresholds
+
+Performance_metrics_table <- bind_rows(
+  compute_metrics(Penguins_Predictions , 0.2),
+  compute_metrics(Penguins_Predictions, 0.5),
+  compute_metrics(Penguins_Predictions, 0.8)
+)
+
+Performance_metrics_table
+
+
+
+```
+
+## **4) Thresholds Use Cases**
+
+a\) In a scenario where it is crucial to catch as many positive cases as possible, it will be better to use **0.2 threshold** because the Recall is closed to 100% with a fairly good precision which will help minimizing False Negatives cases.
+
+b\) I would recommend to use a **0.8 threshold** in case of Spam email classification that is mentioned in Mr **Mohammed Sunasra's recitation** on the performance Metrics for Classification problems in Machine Learning because we should focus to **make Precision as close to 100% as possible**.
+
+# CONCLUSION
+
+These interpretation show how **threshold selection influences the trade-off between false positives and false negatives** which are the two value to focus on when we are trying to improve our model depending on a specific case. In definitive, a combination between performance metrics with thoughtful interpretation could guide us in picking the right probability threshold tailored to real-world needs.
